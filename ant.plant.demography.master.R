@@ -1,5 +1,4 @@
-#For Mac
-setwd("/Users/emiliobruna/Desktop/APCode_GitHub/ant-plant-demography")
+
 library(gdata)
 library(lattice)
 library(MuMIn)
@@ -10,7 +9,7 @@ library(popdemo)
 
 rm(list=ls())
 
-ALLDATA<-read.csv("foo2.csv", dec=".", header = TRUE, sep = ",", check.names=FALSE )
+ALLDATA<-read.csv("Ant-Plant-Demography_2september2014.csv", dec=".", header = TRUE, sep = ",", check.names=FALSE )
 sapply(ALLDATA, class)
 
 source("transitions.R")
@@ -78,12 +77,14 @@ DATA.mixed<-DATA[DATA$sumC>0 & DATA$sumP>0 & DATA$counter.none==0,] #Plants that
 #DATA<-DATA[DATA$canopy.cover=="forest",] #only plants in forest,  irrespective of plateau or streamside
 
 #TOPOGRAPHY
+
 #DATA<-DATA[DATA$topography=="plateau",] # only plants on plateaus, irrespective of gap or closed canopy
-#DATA<-DATA[DATA$topography=="streamside",] # only plants on plateaus, irrespective of gap or closed canopy
+DATA<-DATA[DATA$topography=="streamside",] # only plants on plateaus, irrespective of gap or closed canopy
+
 
 #CANOPY COVER x TOPOGRAPHY
 # Chose combinations of both topography x canopy cover by replacing as appropriate with streamnside or plateau, gap or forest
-#DATA<-DATA[DATA$topography=="streamside" & DATA$canopy.cover=="gap",] 
+# DATA<-DATA[DATA$topography=="streamside" & DATA$canopy.cover=="gap",] 
 
 
 #this is just a little snippet to tell you how many plants you have after you have made your choices
@@ -115,6 +116,8 @@ dff.all<-dff.create(DATA) #a dff of all plants in the dataset
 #this is to add seedlings from 9-ha plot to dff
 Csdlgs9ha<-read.csv("cremaseedlings.csv", dec=".", header = TRUE, sep = ",", check.names=FALSE )
 dff.C<-rbind(Csdlgs9ha, dff.C)
+
+
 
 
 
@@ -196,6 +199,7 @@ image(Pmatrix@meshpoints, Pmatrix@meshpoints, t(sensitivity), main = "Sensitivit
 
 res <- sensParams(growObj = gr1, survObj = sv1, fecObj = fv1, nBigMatrix = 50, minSize = -2, maxSize = 6)
 res
+
 ###Typo in IPMpack code - should be res$sens and res$elas
 par(mfrow = c(2, 1), bty = "l", pty = "m")
 barplot(res$sens, main = expression("Parameter sensitivity of "*lambda),las = 2, cex.names = 0.5)
