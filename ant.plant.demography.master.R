@@ -6,6 +6,8 @@ library(IPMpack)
 library(popbio)
 library(boot)
 library(popdemo)
+library(dplyr)
+library(tidyr)
 
 rm(list=ls())
 
@@ -20,7 +22,6 @@ source("IPMpack.EB.R")
 source("bootstrap.lambdas.R") 
 source("upper.CI.R")
 source("lower.CI.R")
-
 
 ########   CALCLULATE THE NUMBER OF TRANSITIONS IN ANT RESIDENT EACH PLANT HAD     ######## 
 #Uses three functions - one to calclulate the number of transitions for the whole 
@@ -40,7 +41,28 @@ TB<-split.transitions.TB(transitions)
 #are only options to select the proportion of time a plant is occupied by C & P.  Doing 
 #analyses with TB will require writing new code to include Azteca.
 DATA<-MG
-#DATA<-TB 
+DATA<-drop.levels(DATA)
+DATA$site.id<-as.factor(DATA$site.id)
+DATA$block<-as.factor(DATA$block)
+# str(DATA)
+# summary(DATA)
+
+############################################################################################################# 
+########     IN WHAT COMBINATION OF CANOPY COVER & TOPOGRAPHY WILL YOU BE CONDUCTING ANALYSES?   ############ 
+############################################################################################################# 
+#In the Ecology paper we did not explictly consider habitat, so this section is not used
+#I have included it because in we will be considering how demography varies by habitat in future papers.
+#Toggle these on or off depending on what combination of habitat/topography you want to study
+
+# TOPOGRAPHY
+
+#DATA<-DATA[DATA$topography=="plateau",] # only plants on plateaus, irrespective of gap or closed canopy
+DATA_STR<-DATA[DATA$topography=="streamside",] # only plants on streamsides, irrespective of gap or closed canopy
+
+#CANOPY COVER 
+DATA_SG<-DATA[DATA_STR$canopy.cover=="gap",] #only plants in streamside gaps
+DATA_SF<-DATA[DATA_STR$canopy.cover=="forest",] #only plants in streamside forest
+
 
 
 ########################################################################################## 
@@ -50,10 +72,24 @@ DATA<-MG
 #those that had Pheidole 100% of surveys, thoise that were always vacant, some combination, 
 #those always colonized by either one or the other but never vacant, those vacant at least once, etc.
 
+# ALL STREAMSIDE PLANTS (BOTH GAPS AN UNDERSTORIES)
 #the first three were the ones used in the Ecology paper
-DATA.C<-DATA[DATA$prop.C==1,]  #Colonized by Crematogaster in 100% of surveys
-DATA.P<-DATA[DATA$prop.P==1,] #Colonized by Pheidole in 100% of surveys
-DATA.mixed<-DATA[DATA$sumC>0 & DATA$sumP>0 & DATA$counter.none==0,] #Plants that switched partners at least once, were not vacant in any surveys 
+DATA.C.STR<-DATA_STR[DATA_STR$prop.C==1,]  #Colonized by Crematogaster in 100% of surveys
+DATA.P.STR<-DATA_STR[DATA_STR$prop.P==1,] #Colonized by Pheidole in 100% of surveys
+DATA.switch.STR<-DATA_STR[DATA_STR$sumC>0 & DATA_STR$sumP>0 & DATA_STR$counter.none==0,] #Plants that switched partners at least once, were not vacant in any surveys 
+DATA.both.STR<-rbind(DATA.C.STR,DATA.P.STR,DATA.switch.STR)
+
+# PLANTS IN STREAMSIDE GAPS
+DATA.C.SG<-DATA_SG[DATA_SG$prop.C==1,]  #Colonized by Crematogaster in 100% of surveys
+DATA.P.SG<-DATA_SG[DATA_SG$prop.P==1,] #Colonized by Pheidole in 100% of surveys
+DATA.switch.SG<-DATA_SG[DATA_SG$sumC>0 & DATA_SG$sumP>0 & DATA_SG$counter.none==0,] #Plants that switched partners at least once, were not vacant in any surveys 
+DATA.both.SG<-rbind(DATA.C.SG,DATA.P.SG,DATA.switch.SG)
+
+# PLANTS IN STREAMSIDE FOREST
+DATA.C.SF<-DATA_SF[DATA_SF$prop.C==1,]  #Colonized by Crematogaster in 100% of surveys
+DATA.P.SF<-DATA_SF[DATA_SF$prop.P==1,] #Colonized by Pheidole in 100% of surveys
+DATA.switch.SF<-DATA_SF[DATA_SF$sumC>0 & DATA_SF$sumP>0 & DATA_SF$counter.none==0,] #Plants that switched partners at least once, were not vacant in any surveys 
+DATA.both.SF<-rbind(DATA.C.SF,DATA.P.SF,DATA.switch.SF)
 
 #Not used in first Ecology paper but will be useful down the road in other analyses
 #DATA<-DATA[DATA$prop.C<1 & DATA$prop.P<1 ,] #colonized <100% of time by C or P, includes those vacant in one or more surveys
@@ -65,47 +101,35 @@ DATA.mixed<-DATA[DATA$sumC>0 & DATA$sumP>0 & DATA$counter.none==0,] #Plants that
  
 
 
-############################################################################################################# 
-########     IN WHAT COMBINATION OF CANOPY COVER & TOPOGRAPHY WILL YOU BE CONDUCTING ANALYSES?   ############ 
-############################################################################################################# 
-#In the Ecology paper we did not explictly consider habitat, so this section is not used
-#I have included it because in we will be considering how demography varies by habitat in future papers.
-#Toggle these on or off depending on what combination of habitat/topography you want to study
-
-#CANOPY COVER
-#DATA<-DATA[DATA$canopy.cover=="gap",] #only plants in gap, irrespective of plateau or streamside
-#DATA<-DATA[DATA$canopy.cover=="forest",] #only plants in forest,  irrespective of plateau or streamside
-
-#TOPOGRAPHY
-
-#DATA<-DATA[DATA$topography=="plateau",] # only plants on plateaus, irrespective of gap or closed canopy
-DATA<-DATA[DATA$topography=="streamside",] # only plants on plateaus, irrespective of gap or closed canopy
-
-
-#CANOPY COVER x TOPOGRAPHY
-# Chose combinations of both topography x canopy cover by replacing as appropriate with streamnside or plateau, gap or forest
-# DATA<-DATA[DATA$topography=="streamside" & DATA$canopy.cover=="gap",] 
-
-
 #this is just a little snippet to tell you how many plants you have after you have made your choices
 #it's a good way of making sure you have chosen what you think you have chosen.  
-#Be sure to change the identifyier after DATA (ie DATA.C, DATA.P, Data.mixed) to the one you want.
+#Be sure to change the identifyier after DATA (ie DATA.C, DATA.P, DATA.switch) to the one you want.
 
 #DATA.C<-drop.levels(DATA.C)
-#summary(DATA.C)
-#plantdensity<-ftable(DATA.C$topography, DATA.C$plant.species, DATA.C$canopy.cover)
-#plantdensity
-
+# # summary(DATA.both.SF)
+# plantdensity<-ftable(DATA.C$topography, DATA.C$plant.species, DATA.C$canopy.cover)
+# #plantdensity
 
 ############################################################################################################# 
 ########################     PUT THE DATA IN THE FORMAT REQUIRED BY IPMpack   ############################### 
 ############################################################################################################# 
 ####IPMpack requires a dataframe called 'dff'"'. The function "dff.create" creates one for each of your datasets.
-dff.mixed<-dff.create(DATA.mixed)
-dff.C<-dff.create(DATA.C)
-dff.P<-dff.create(DATA.P)
+dff.switch.STR<-dff.create(DATA.switch.STR)
+dff.both.STR<-dff.create(DATA.both.STR)
+dff.C.STR<-dff.create(DATA.C.STR)
+dff.P.STR<-dff.create(DATA.P.STR)
 
-dff.all<-dff.create(DATA) #a dff of all plants in the dataset
+dff.switch.SG<-dff.create(DATA.switch.SG)
+dff.both.SG<-dff.create(DATA.both.SG)
+dff.C.SG<-dff.create(DATA.C.SG)
+dff.P.SG<-dff.create(DATA.P.SG)
+
+dff.switch.SF<-dff.create(DATA.switch.SF)
+dff.both.SF<-dff.create(DATA.both.SF)
+dff.C.SF<-dff.create(DATA.C.SF)
+dff.P.SF<-dff.create(DATA.P.SF)
+
+dff.all<-dff.create(DATA_STR) #a dff of all plants in the dataset
 
  
 
@@ -115,9 +139,18 @@ dff.all<-dff.create(DATA) #a dff of all plants in the dataset
 ############################################################################################################# 
 #this is to add seedlings from 9-ha plot to dff
 Csdlgs9ha<-read.csv("cremaseedlings.csv", dec=".", header = TRUE, sep = ",", check.names=FALSE )
-dff.C<-rbind(Csdlgs9ha, dff.C)
 
 
+dff.switch.STR<-rbind(Csdlgs9ha, dff.switch.STR)
+dff.both.STR<-rbind(Csdlgs9ha, dff.both.STR)
+dff.C.STR<-rbind(Csdlgs9ha, dff.C.STR)
+dff.switch.SF<-rbind(Csdlgs9ha, dff.switch.SF)
+dff.both.SF<-rbind(Csdlgs9ha, dff.both.SF)
+dff.C.SF<-rbind(Csdlgs9ha, dff.C.SF)
+dff.switch.SG<-rbind(Csdlgs9ha, dff.switch.SG)
+dff.both.SG<-rbind(Csdlgs9ha, dff.both.SG)
+dff.C.SG<-rbind(Csdlgs9ha, dff.C.SG)
+dff.all<-rbind(Csdlgs9ha, dff.all)
 
 
 
@@ -147,9 +180,22 @@ fec2
 # manipulate in the function
 # the function also runs all the diagnistics.
 
-lambda.mixed<-IPMpack.EB(dff.mixed, fec2)
-lambda.C<-IPMpack.EB(dff.C, fec2)
-lambda.P<-IPMpack.EB(dff.P, fec2)
+lambda.switch.str<-IPMpack.EB(dff.switch.STR, fec2)
+lambda.both.str<-IPMpack.EB(dff.both.STR, fec2)
+lambda.C.str<-IPMpack.EB(dff.C.STR, fec2)
+lambda.P.str<-IPMpack.EB(dff.P.STR, fec2)
+
+lambda.switch.sg<-IPMpack.EB(dff.switch.SG, fec2)
+lambda.both.sg<-IPMpack.EB(dff.both.SG, fec2)
+lambda.C.sg<-IPMpack.EB(dff.C.SG, fec2)
+lambda.P.sg<-IPMpack.EB(dff.P.SG, fec2)
+
+lambda.switch.sf<-IPMpack.EB(dff.switch.SF, fec2)
+lambda.both.sf<-IPMpack.EB(dff.both.SF, fec2)
+lambda.C.sf<-IPMpack.EB(dff.C.SF, fec2)
+lambda.P.sf<-IPMpack.EB(dff.P.SF, fec2)
+
+lambda.all<-IPMpack.EB(dff.all, fec2)
 
 
 
@@ -163,9 +209,9 @@ bootreps<-1000
 
 #this will calclulate the upper and lower 95% Confidence Intervals 
 #for the "alternating-partner" population
-bstrap.lambdas.mixed<-bootstrap.lambdas(dff.mixed, bootreps) 
-upper.CI.mixed<-upper.CI(bstrap.lambdas.mixed,lambda.mixed, bootreps)
-lower.CI.mixed<-lower.CI(bstrap.lambdas.mixed,lambda.mixed, bootreps)
+bstrap.lambdas.switch<-bootstrap.lambdas(dff.switch, bootreps) 
+upper.CI.switch<-upper.CI(bstrap.lambdas.switch,lambda.switch, bootreps)
+lower.CI.switch<-lower.CI(bstrap.lambdas.switch,lambda.switch, bootreps)
 
 #this will calclulate the upper and lower 95% Confidence Intervals
 #for the Crematogaster population
