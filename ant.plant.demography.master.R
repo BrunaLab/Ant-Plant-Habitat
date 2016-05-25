@@ -68,37 +68,36 @@ DATA_SF<-DATA[DATA_STR$canopy.cover=="forest",] #only plants in streamside fores
 ########################################################################################## 
 ###########     WITH WHICH ANT OCCUPANT WILL YOU BE CONDUCTING ANALYSES?      ############
 ##########################################################################################
-#Choose what you subset of plants with which to do analyses:  100% of surveys
-#those that had Pheidole 100% of surveys, thoise that were always vacant, some combination, 
-#those always colonized by either one or the other but never vacant, those vacant at least once, etc.
+# Choose what you subset of plants with which to do analyses. Note that the Bruna et al 2014 Ecology paper used
+# only plants occupied in all suerveys (interest was in effect of partner ID, so controlling for effect of being empty
+# by only using plants 100% P, 100% C or 100% mixed).  The current paper is interested in habitat effects, which might 
+# include being empty for a while since few ants in a site.   
 
 # ALL STREAMSIDE PLANTS (BOTH GAPS AN UNDERSTORIES)
-#the first three were the ones used in the Ecology paper
-DATA.C.STR<-DATA_STR[DATA_STR$prop.C==1,]  #Colonized by Crematogaster in 100% of surveys
-DATA.P.STR<-DATA_STR[DATA_STR$prop.P==1,] #Colonized by Pheidole in 100% of surveys
-DATA.switch.STR<-DATA_STR[DATA_STR$sumC>0 & DATA_STR$sumP>0 & DATA_STR$counter.none==0,] #Plants that switched partners at least once, were not vacant in any surveys 
+
+# these were the ones used in the 2014 Ecology paper - plants occupied 100% of surveys
+# DATA.C.STR<-DATA_STR[DATA_STR$prop.C==1,]  #Colonized by Crematogaster in 100% of surveys
+# DATA.P.STR<-DATA_STR[DATA_STR$prop.P==1,] #Colonized by Pheidole in 100% of surveys
+# DATA.switch.STR<-DATA_STR[DATA_STR$sumC>0 & DATA_STR$sumP>0,] #Plants that switched partners at least once, were not vacant in any surveys 
+# DATA.both.STR<-rbind(DATA.C.STR,DATA.P.STR,DATA.switch.STR)
+
+DATA.C.STR<-DATA_STR[DATA_STR$sumC>0 & DATA_STR$sumP==0,]  #Colonized by Crematogaster or empty (Crema at least 1 time)
+DATA.P.STR<-DATA_STR[DATA_STR$counter.none>0 & DATA_STR$sumP>0 & DATA_STR$sumC==0,] #Colonized by Pheidole or empty (colonized by Pheidole at least 1 time)
+DATA.switch.STR<-DATA_STR[DATA_STR$sumC>0 & DATA_STR$sumP>0,] #Plants that switched partners at least once, may or may not have been vacant in one survey
 DATA.both.STR<-rbind(DATA.C.STR,DATA.P.STR,DATA.switch.STR)
 
 # PLANTS IN STREAMSIDE GAPS
-DATA.C.SG<-DATA_SG[DATA_SG$prop.C==1,]  #Colonized by Crematogaster in 100% of surveys
-DATA.P.SG<-DATA_SG[DATA_SG$prop.P==1,] #Colonized by Pheidole in 100% of surveys
-DATA.switch.SG<-DATA_SG[DATA_SG$sumC>0 & DATA_SG$sumP>0 & DATA_SG$counter.none==0,] #Plants that switched partners at least once, were not vacant in any surveys 
-DATA.both.SG<-rbind(DATA.C.SG,DATA.P.SG,DATA.switch.SG)
+DATA.C.SG<-DATA_SG[DATA_SG$sumC>0 & DATA_SG$sumP==0,]  #Colonized by Crematogaster or empty (Crema at least 1 time)
+DATA.P.SG<-DATA_SG[DATA_SG$counter.none>0 & DATA_SG$sumP>0 & DATA_SG$sumC==0,] #Colonized by Pheidole or empty (colonized by Pheidole at least 1 time)
+DATA.switch.SG<-DATA_SG[DATA_SG$sumC>0 & DATA_SG$sumP>0,] #Plants that switched partners at least once, may or may not have been vacant in one survey
+DATA.both.SG<-rbind(DATA.C.STR,DATA.P.STR,DATA.switch.STR)
 
 # PLANTS IN STREAMSIDE FOREST
-DATA.C.SF<-DATA_SF[DATA_SF$prop.C==1,]  #Colonized by Crematogaster in 100% of surveys
-DATA.P.SF<-DATA_SF[DATA_SF$prop.P==1,] #Colonized by Pheidole in 100% of surveys
-DATA.switch.SF<-DATA_SF[DATA_SF$sumC>0 & DATA_SF$sumP>0 & DATA_SF$counter.none==0,] #Plants that switched partners at least once, were not vacant in any surveys 
-DATA.both.SF<-rbind(DATA.C.SF,DATA.P.SF,DATA.switch.SF)
+DATA.C.SF<-DATA_SF[DATA_SF$sumC>0 & DATA_SF$sumP==0,]  #Colonized by Crematogaster or empty (Crema at least 1 time)
+DATA.P.SF<-DATA_SF[DATA_SF$counter.none>0 & DATA_SF$sumP>0 & DATA_SF$sumC==0,] #Colonized by Pheidole or empty (colonized by Pheidole at least 1 time)
+DATA.switch.SF<-DATA_SF[DATA_SF$sumC>0 & DATA_SF$sumP>0,] #Plants that switched partners at least once, may or may not have been vacant in one survey
+DATA.both.SF<-rbind(DATA.C.STR,DATA.P.STR,DATA.switch.STR)
 
-#Not used in first Ecology paper but will be useful down the road in other analyses
-#DATA<-DATA[DATA$prop.C<1 & DATA$prop.P<1 ,] #colonized <100% of time by C or P, includes those vacant in one or more surveys
-#DATA<-DATA[DATA$sumC>0 & DATA$sumP>0 & DATA$counter.none>0,] #lants that  switched partners plus had zero in at least one survey (NB: I think this does same as above?)
-#DATA<-DATA[DATA$sumC>0 & DATA$sumP>0,] #this takes plants that  switched partners  (inlcuding with or without zero in at least one survey
-#DATA<-DATA[DATA$counter.none>0 & DATA$sumP>0 & DATA$sumC==0,] #plants that had P at least once+were empty at least once, never had Crematogaster
-#DATA<-DATA[DATA$counter.none>0 & DATA$sumC>0 & DATA$sumP==0,] #plants that had C at least once+were empty at least once, never had Pheidole
-#DATA<-DATA[DATA$prop.none==1,] #never occupied in any survey
- 
 
 
 #this is just a little snippet to tell you how many plants you have after you have made your choices
@@ -163,6 +162,8 @@ dff.all<-rbind(Csdlgs9ha, dff.all)
 # will evaluate if this vairies in different habitat types, but in the Ecology paper I used the constant below, which is the 
 # value for all habitats and species of ant occupant combined.
 # can modify to suite needs with 
+
+#####DO YOU NEED TO DO THIS AT THE HABITAT LEVEL???
 
 totalfruits<-sum(dff.all$fec1, na.rm=TRUE) #total fruits produced 
 sdlgs<-nrow(dff.all[is.na(dff.all$size),]) #total seedlings produced
